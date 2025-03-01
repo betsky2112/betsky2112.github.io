@@ -1,0 +1,32 @@
+name: Sync My Portfolio
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Sync setiap hari jam 00:00 UTC
+  workflow_dispatch:  # Bisa dijalankan secara manual
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repo betsky2112.github.io
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      
+      - name: Clone my-portfolio
+        run: |
+          git clone --depth=1 https://github.com/username/my-portfolio temp_repo
+          rsync -av --delete temp_repo/ ./
+          rm -rf temp_repo
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "Sync from my-portfolio" || echo "No changes to commit"
+          git push https://$DEPLOY_PAT@github.com/username/betsky21.git HEAD:main
+        env:
+          DEPLOY_PAT: ${{ secrets.DEPLOY_PAT }}
